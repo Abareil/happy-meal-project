@@ -4,16 +4,19 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+from dotenv import load_dotenv
+import os
 from datetime import datetime
 from decimal import Decimal
 import boto3
 import json
-
+load_dotenv()
 
 def create_webdriver():
     options = webdriver.ChromeOptions()
     options.add_argument("--start-maximized")
     options.add_argument("--disable-extensions")
+    #que no sea visible el navegador
     options.add_argument("--headless")
     options.add_argument("--window-size=1920,1080")
     options.add_argument("--no-sandbox")
@@ -28,7 +31,7 @@ def navigate_to_page(driver, url):
     driver.get(url)
 
 
-def find_element_by_css(driver, css_selector, timeout=20):
+def find_element_by_css(driver, css_selector, timeout=30):
     return WebDriverWait(driver, timeout).until(
         EC.presence_of_element_located((By.CSS_SELECTOR, css_selector))
     )
@@ -42,16 +45,7 @@ def find_element_by_xpath(driver, xpath, timeout=30):
 
 def click_element(element):
     element.click()
-
-
-# def save_text_to_file(text, file_path):
-#     with open(file_path, 'w') as file:
-#         file.write(text)
-
-import boto3
-from decimal import Decimal
-from datetime import datetime
-import json
+    return "click realizado"
 
 
 def save_price_to_dynamodb(table_name, price_str):
@@ -60,7 +54,7 @@ def save_price_to_dynamodb(table_name, price_str):
     price_decimal = Decimal(price_float)
 
     # DB connection
-    dynamodb = boto3.resource('dynamodb', region_name='us-east-2')  # Especifica la región aquí
+    dynamodb = boto3.resource('dynamodb', region_name=os.getenv('REGION'))  # Especifica la región aquí
     table = dynamodb.Table(table_name)
 
     # item
@@ -75,11 +69,11 @@ def save_price_to_dynamodb(table_name, price_str):
         table.put_item(Item=item)
         return {
             'statusCode': 200,
-            'body': json.dumps("Ítem insertado exitosamente!")
+            'body': json.dumps("Item saved successfully!")
         }
     except Exception as e:
         return {
             'statusCode': 500,
-            'body': json.dumps(f'Error al insertar el ítem: {str(e)}')
+            'body': json.dumps(f'Error inserting item: {str(e)}')
         }
 
